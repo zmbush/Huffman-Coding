@@ -1,7 +1,150 @@
+#include <algorithm>
+#include <fstream>
 #include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
+using std::cerr;
 using std::cout;
 using std::endl;
+using std::ifstream;
+using std::ios;
+using std::make_heap;
+using std::map;
+using std::ofstream;
+using std::pop_heap;
+using std::push_heap;
+using std::string;
+using std::vector;
+
+struct tree_node{
+  tree_node *left;
+  tree_node *right;
+  char character;
+  int weight;
+};
+
+int compare_node(tree_node *i, tree_node *j){
+  return (i->weight > j->weight);
+}
+
+struct huffman_bits{
+  int value;
+  int length;
+};
+
+void getBits(tree_node *root, huffman_bits soFar, map<char, huffman_bits> &values){
+  if(root == NULL) return;
+  if(root->character != '\0'){
+    cout << "Creating new bits" << endl;
+    values[root->character] = soFar;
+  }
+  soFar.length++;
+  soFar.value <<= 1;
+  getBits(root->left, soFar, values);
+  soFar.value |= 1;
+  getBits(root->right, soFar, values);
+}
+
 int main(int argc, char **argv){
-  cout << "hello" << endl;
+  if(argc < 2){
+    cerr << "You must specify a file" << endl;
+    return 1;
+  }
+
+  ifstream file;
+  file.open(argv[1], ios::in);
+
+  if(!file.is_open()){
+    cerr << "File not found" << endl;
+    return 1;
+  }
+
+  // Calculate Frequencies
+  char current;
+  map<char, int> counts;
+  while(file.good()){
+    current = file.get();
+    if(file.good())
+      if(counts.find(current) != counts.end())
+        counts[current] += 1;
+      else
+        counts[current] = 1;
+  }
+
+  vector<tree_node *> heap;
+  for(map<char, int>::iterator i = counts.begin(); i != counts.end(); i++){
+    tree_node *newTN = (tree_node *)malloc(sizeof(tree_node));
+    newTN->left = NULL;
+    newTN->right = NULL;
+    newTN->character = i->first;
+    newTN->weight = i->second;
+    heap.push_back(newTN);
+  }
+
+  // Create huffman tree
+  make_heap(heap.begin(), heap.end(), compare_node);
+  
+  while(heap.size() > 1){
+    pop_heap(heap.begin(), heap.end(), compare_node);
+    tree_node *first = heap.back();
+    heap.pop_back();
+
+    pop_heap(heap.begin(), heap.end(), compare_node);
+    tree_node *second = heap.back();
+    heap.pop_back();
+    
+    tree_node *newNode = (tree_node *)malloc(sizeof(tree_node));
+    newNode->left = first;
+    newNode->right = second;
+    newNode->character = '\0';
+    newNode->weight = first->weight + second->weight;
+    heap.push_back(newNode);
+
+    push_heap(heap.begin(), heap.end(), compare_node);
+  }
+  
+  map<char, huffman_bits> codes;
+  huffman_bits initial;
+  initial.value = 0;
+  initial.length = 0;
+
+  getBits(heap[0], initial, codes);
+
+
+  ofstream out;
+  string filename = argv[1];
+  filename += ".zzip";
+  out.open(filename.c_str(), ios::out | ios::binary);
+  
+  file.close();
+  file.open(argv[1], ios::in);
+ 
+  char currentData = 0;
+  int currentLength = 0;
+  while(file.good()){
+    current = file.get();
+    if(file.good()){
+      huffman_bits these = codes[current];
+      if(currentLength + these.length <= sizeof(currentData) * 8){
+        currentData <<= these.length;
+        currentData |= these.value;
+        currentLength += these.length;
+        cout << "New data: " << currentData;
+      }else{
+        int diff = sizeof(currentData) * 8 - currentLength;
+        currentData <<= diff;
+        int newData = these.value >> these.length - diff;
+      }
+
+      if(currentLength == sizeof(currentData) * 8){
+        out.write(currentData);
+        currentLength = 0;
+        currentData = 0;
+
+      }
+      cout << current << ": " << codes[current].value << endl;
+    }
+  }
 }
