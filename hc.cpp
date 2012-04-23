@@ -87,6 +87,7 @@ int main(int argc, char **argv){
   }
   counts['\0'] = 0;
 
+  // Calculate bits
   vector<tree_node *> heap;
   for(map<char, int>::iterator i = counts.begin(); i != counts.end(); i++){
     tree_node *newTN = (tree_node *)malloc(sizeof(tree_node));
