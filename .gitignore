@@ -4,6 +4,7 @@
 *.o
 *.out
 hc
+hunc
 
 # Compiled Dynamic libraries
 *.so
