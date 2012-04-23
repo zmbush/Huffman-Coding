@@ -12,3 +12,5 @@ hc
 *.lai
 *.la
 *.a
+
+*.zzip
