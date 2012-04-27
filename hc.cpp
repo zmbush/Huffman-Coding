@@ -77,6 +77,8 @@ int main(int argc, char **argv){
   // Calculate Frequencies
   char current;
   map<char, int> counts;
+
+  cout << "Counting Frequencies" << endl;
   while(file.good()){
     current = file.get();
     if(file.good())
@@ -89,6 +91,7 @@ int main(int argc, char **argv){
     counts['\0'] = 0;
 
   // Calculate bits
+  cout << "Creating Huffman Tree" << endl;
   vector<tree_node *> heap;
   for(map<char, int>::iterator i = counts.begin(); i != counts.end(); i++){
     tree_node *newTN = (tree_node *)malloc(sizeof(tree_node));
@@ -137,6 +140,7 @@ int main(int argc, char **argv){
   file.close();
   file.open(argv[1], ios::in);
  
+  cout << "Writing Cypher" << endl;
   // out.write((char *)&codes['\0'].value, 4);
   for(map<char, huffman_bits>::iterator i = codes.begin(); i != codes.end(); i++){
     if(i->first != '\0'){

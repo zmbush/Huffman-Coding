@@ -2,6 +2,7 @@
 #include <fstream>
 #include <map>
 #include <string>
+#include <cstring>
 
 using std::cerr;
 using std::cout;
@@ -53,6 +54,12 @@ int main(int argc, char **argv){
   if(argc > 2){
     so = false;
     output.open(argv[2], ios::out);
+  }
+  char *end = argv[1] + strlen(argv[1]) - 5;
+  if(so && (strcmp(end, ".zzip") == 0)){
+    so = false;
+    argv[1][strlen(argv[1]) - 5] = '\0';
+    output.open(argv[1], ios::out);
   }
 
   file.seekg(0, ios::end);
