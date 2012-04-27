@@ -50,7 +50,7 @@ string bitsToString(huffman_bits bits){
 
 void getBits(tree_node *root, huffman_bits soFar, map<char, huffman_bits> &values){
   if(root == NULL) return;
-  if(root->character != '\0'){
+  if(root->left == NULL && root->right == NULL){
     values[root->character] = soFar;
   }
   soFar.length++;
@@ -124,8 +124,8 @@ int main(int argc, char **argv){
   
   map<char, huffman_bits> codes;
   huffman_bits initial;
-  initial.value = 0;
-  initial.length = 0;
+  initial.value = 1;
+  initial.length = 1;
 
   getBits(heap[0], initial, codes);
 
@@ -142,18 +142,19 @@ int main(int argc, char **argv){
     if(i->first != '\0'){
       out.write(&i->first, 1);
       out.write((char *)&i->second.value, 4);
-      cout << i->first << ": " << bitsToString(i->second) << endl;
+      // cout << i->first << ": " << bitsToString(i->second) << endl;
     }
   }
   char flag = '\0';
   out.write(&flag, 1);
   out.write((char *)&codes['\0'].value, 4);
-  char currentData = 0;
+  int currentData = 0;
   int currentLength = 0;
   while(file.good()){
     current = file.get();
     if(file.good()){
       huffman_bits these = codes[current];
+      // cout << "Writing character: " << current << " with bits: " << bitsToString(these) << endl;
       // cout << "These bits:" << bitsToString(these) << endl;
       if(currentLength + these.length <= sizeof(currentData) * 8){
         currentData <<= these.length;
@@ -164,7 +165,7 @@ int main(int argc, char **argv){
         currentData <<= diff;
         int newData = these.value >> these.length - diff;
         currentData |= newData;
-        out << currentData;
+        out.write((char *)&currentData, 4);
         newData = these.value;
         int shamt = (sizeof(currentData)*8) - these.length;
         currentData = (these.value << shamt) >> shamt;
@@ -172,10 +173,15 @@ int main(int argc, char **argv){
       }
 
       if(currentLength == sizeof(currentData) * 8){
-        out << currentData;
+        out.write((char *)&currentData, 4);
         currentLength = 0;
         currentData = 0;
       }
     }
+  }
+  if(currentLength > 0){
+    int shamt = (sizeof(currentData)*8) - currentLength;
+    currentData <<= shamt;
+    out.write((char *)&currentData, 4);
   }
 }
