@@ -85,7 +85,8 @@ int main(int argc, char **argv){
       else
         counts[current] = 1;
   }
-  counts['\0'] = 0;
+  if(counts.find('\0') == counts.end())
+    counts['\0'] = 0;
 
   // Calculate bits
   vector<tree_node *> heap;
@@ -136,15 +137,16 @@ int main(int argc, char **argv){
   file.close();
   file.open(argv[1], ios::in);
  
-  out.write((char *)&codes['\0'].value, 4);
+  // out.write((char *)&codes['\0'].value, 4);
   for(map<char, huffman_bits>::iterator i = codes.begin(); i != codes.end(); i++){
     if(i->first != '\0'){
-      out << i->first;
-      int *v = &i->second.value;
-      out.write((char *)v, 4);
+      out.write(&i->first, 1);
+      out.write((char *)&i->second.value, 4);
+      cout << i->first << ": " << bitsToString(i->second) << endl;
     }
   }
-  out << '\0';
+  char flag = '\0';
+  out.write(&flag, 1);
   out.write((char *)&codes['\0'].value, 4);
   char currentData = 0;
   int currentLength = 0;
